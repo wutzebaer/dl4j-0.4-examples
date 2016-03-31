@@ -14,10 +14,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <shadedClassifier>bin</shadedClassifier>
-        <java.version>1.7</java.version>
-        <nd4j.version>0.4-rc3.8</nd4j.version>
-        <dl4j.version>0.4-rc3.8</dl4j.version>
-        <canova.version>0.0.0.14</canova.version>
+        <java.version>1.8</java.version>
+        <nd4j.version>0.4-rc3.9-SNAPSHOT</nd4j.version>
+        <dl4j.version>0.4-rc3.9-SNAPSHOT</dl4j.version>
+        <canova.version>0.0.0.15-SNAPSHOT</canova.version>
         <guava.version>19.0</guava.version>
         <jfreechart.version>1.0.13</jfreechart.version>
         <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
@@ -50,21 +50,22 @@
         </repository>
     </distributionManagement>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.nd4j</groupId>
-                <artifactId>nd4j-x86</artifactId>
-                <version>${nd4j.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
+   		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20141113</version>
+		</dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-nlp</artifactId>
             <version>${dl4j.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>nd4j-api</artifactId>
+            		<groupId>org.nd4j</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
@@ -83,17 +84,32 @@
         </dependency>
         <dependency>
             <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-x86</artifactId>
+            <artifactId>nd4j-native</artifactId>
+            <!-- <artifactId>nd4j-cuda-7.5</artifactId> -->
+            <!-- <artifactId>nd4j-naive</artifactId> -->
+            <version>${nd4j.version}</version>
         </dependency>
         <dependency>
             <artifactId>canova-nd4j-image</artifactId>
             <groupId>org.nd4j</groupId>
             <version>${canova.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>nd4j-api</artifactId>
+            		<groupId>org.nd4j</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <artifactId>canova-nd4j-codec</artifactId>
             <groupId>org.nd4j</groupId>
             <version>${canova.version}</version>
+            <exclusions>
+            	<exclusion>
+            		<artifactId>nd4j-api</artifactId>
+            		<groupId>org.nd4j</groupId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <!-- Used in the RegressionMathFunctions example -->
         <dependency>
