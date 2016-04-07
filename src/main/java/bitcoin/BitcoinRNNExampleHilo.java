@@ -19,6 +19,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.storage.StorageLevel;
+import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -30,6 +35,7 @@ import org.deeplearning4j.nn.conf.layers.RnnOutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
@@ -40,14 +46,21 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
  */
 public class BitcoinRNNExampleHilo {
 
-	public static final int HIDDEN_LAYER_WIDTH = 40;
-	public static final int HIDDEN_LAYER_CONT = 2;
+	public static final int HIDDEN_LAYER_WIDTH = 10;
+	public static final int HIDDEN_LAYER_CONT = 1;
 	public static final Random r = new Random(78945);
 	public static final List<Integer> values = new ArrayList<>();
-	public static final int sampleLangth = 1440*3; // 10080=7 tage 1440=1 tag
-	public static final int samplesPerDataset = 90;
+	public static final int sampleLangth = 144 * 3; // 10080=7 tage 1440=1 tag
+	public static final int samplesPerDataset = 10;
 
 	public static void main(String[] args) throws NumberFormatException, IOException {
+
+		int nCores = 4;
+		SparkConf sparkConf = new SparkConf();
+		sparkConf.setMaster("local[" + nCores + "]");
+		sparkConf.setAppName("LSTM_Char");
+		sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+		JavaSparkContext sc = new JavaSparkContext(sparkConf);
 
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
 		builder.iterations(100);
@@ -90,7 +103,20 @@ public class BitcoinRNNExampleHilo {
 		MultiLayerConfiguration conf = listBuilder.build();
 		MultiLayerNetwork net = new MultiLayerNetwork(conf);
 		net.init();
+		net.setUpdater(null);
 		net.setListeners(new ScoreIterationListener(10));
+
+		SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
+
+		// Print the number of parameters in the network (and for each layer)
+		Layer[] layers = net.getLayers();
+		int totalNumParams = 0;
+		for (int i = 0; i < layers.length; i++) {
+			int nParams = layers[i].numParams();
+			System.out.println("Number of parameters in layer " + i + ": " + nParams);
+			totalNumParams += nParams;
+		}
+		System.out.println("Total number of network parameters: " + totalNumParams);
 
 		try {
 			// net = load();
@@ -110,8 +136,19 @@ public class BitcoinRNNExampleHilo {
 		System.out.println(values.size());
 
 		DataSet learnDs = createDataset(samplesPerDataset, sampleLangth);
+
+		List<DataSet> list = new ArrayList<>();
+		for (int i = 0; i < nCores; i++) {
+			list.add(createDataset(samplesPerDataset, sampleLangth));
+		}
+		JavaRDD<DataSet> datasets = sc.parallelize(list);
+		datasets.persist(StorageLevel.MEMORY_ONLY());
+
 		for (int i = 0; i < 10000; i++) {
 
+			net = sparkNetwork.fitDataSet(datasets);
+
+			// sparkNetwork.fitDataSet(rdd);
 			net.fit(learnDs);
 
 			// save(net);
