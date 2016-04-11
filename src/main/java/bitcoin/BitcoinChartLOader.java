@@ -32,6 +32,9 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 public class BitcoinChartLOader {
+	private static final int ZU_MERGENDE_ZEILEN = 30;
+	private static final int RUNDEN_AUF_NACHKOMMASTELLEN = 1;
+
 	public static void main(String[] args) throws ClientProtocolException, IOException {
 		createCoursesLog();
 		createCleanBpi();
@@ -45,7 +48,7 @@ public class BitcoinChartLOader {
 		PrintWriter os = new PrintWriter(new BufferedWriter(new FileWriter("courses_bpi_fixed_merged_hilo.log")));
 
 		// round to n nachkomma stellen
-		double floor = Math.pow(10, 1);
+		double floor = Math.pow(10, RUNDEN_AUF_NACHKOMMASTELLEN);
 
 		Double lastvalue = Math.floor(Double.valueOf(is.readLine().split(",")[1]) * floor) / floor;
 		String line;
@@ -68,7 +71,7 @@ public class BitcoinChartLOader {
 		PrintWriter os = new PrintWriter(new BufferedWriter(new FileWriter("courses_bpi_fixed_merged.log")));
 
 		// merge n minutes 1440=1tag
-		final int mergeCount = 10;
+		final int mergeCount = ZU_MERGENDE_ZEILEN;
 
 		double sum = 0;
 		int mergedLines = 0;

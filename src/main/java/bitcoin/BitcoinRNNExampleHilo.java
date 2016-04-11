@@ -44,8 +44,8 @@ public class BitcoinRNNExampleHilo {
 	public static final int HIDDEN_LAYER_CONT = 2;
 	public static final Random r = new Random(78945);
 	public static final List<Integer> values = new ArrayList<>();
-	public static final int sampleLangth = 144*3; // 10080=7 tage 1440=1 tag
-	public static final int samplesPerDataset = 90;
+	public static final int sampleLangth = 1440/30 * 1; // 10080=7 tage 1440=1 tag
+	public static final int samplesPerDataset = 100;
 
 	public static void main(String[] args) throws NumberFormatException, IOException {
 
@@ -93,8 +93,7 @@ public class BitcoinRNNExampleHilo {
 		net.setListeners(new ScoreIterationListener(10));
 
 		try {
-			// net = load();
-			System.out.println("net loaded");
+			net = load();
 		} catch (Exception e) {
 			System.out.println("net not loaded " + e.getMessage());
 		}
@@ -109,102 +108,59 @@ public class BitcoinRNNExampleHilo {
 		is.close();
 		System.out.println(values.size());
 
-		DataSet learnDs = createDataset(samplesPerDataset, sampleLangth);
 		for (int i = 0; i < 10000; i++) {
+			DataSet learnDs = createDataset(samplesPerDataset, sampleLangth);
 
 			net.fit(learnDs);
 
-			// save(net);
+			save(net);
 
-			net.rnnClearPreviousState();
+			testNetwork(net, sampleLangth, sampleLangth);
+			testNetwork(net, sampleLangth, sampleLangth);
+			testNetwork(net, sampleLangth, sampleLangth);
+			
+			testNetwork(net, sampleLangth, sampleLangth / 2);
+			testNetwork(net, sampleLangth, sampleLangth / 2);
+			testNetwork(net, sampleLangth, sampleLangth / 2);
+			
+			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
+			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
+			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
 
-			String input = "";
-			String expect = "";
-			String calced = "";
-
-			DecimalFormat fmt = new DecimalFormat("+0;-0");
-
-			for (int j = 0; j < sampleLangth; j++) {
-
-				INDArray testInput = Nd4j.zeros(3);
-				testInput.putScalar(0, learnDs.getFeatureMatrix().getInt(0, 0, j));
-				testInput.putScalar(1, learnDs.getFeatureMatrix().getInt(0, 1, j));
-				testInput.putScalar(2, learnDs.getFeatureMatrix().getInt(0, 2, j));
-				double[] distInput = new double[] { testInput.getDouble(0), testInput.getDouble(1), testInput.getDouble(2) };
-				int inputFromDistribution = sampleFromDistribution(distInput);
-				input += fmt.format(inputFromDistribution - 1) + " ";
-
-				INDArray testExspect = Nd4j.zeros(3);
-				testExspect.putScalar(0, learnDs.getLabels().getInt(0, 0, j));
-				testExspect.putScalar(1, learnDs.getLabels().getInt(0, 1, j));
-				testExspect.putScalar(2, learnDs.getLabels().getInt(0, 2, j));
-				double[] distExpect = new double[] { testExspect.getDouble(0), testExspect.getDouble(1), testExspect.getDouble(2) };
-				int expectFromDistribution = sampleFromDistribution(distExpect);
-				expect += fmt.format(expectFromDistribution - 1) + " ";
-
-				INDArray testInit = Nd4j.zeros(3);
-				testInit.putScalar(0, learnDs.getFeatureMatrix().getInt(0, 0, j));
-				testInit.putScalar(1, learnDs.getFeatureMatrix().getInt(0, 1, j));
-				testInit.putScalar(2, learnDs.getFeatureMatrix().getInt(0, 2, j));
-				INDArray output = net.rnnTimeStep(testInit);
-				double[] distCalc = new double[] { output.getDouble(0), output.getDouble(1), output.getDouble(2) };
-				int sampleFromDistribution = sampleFromDistribution(distCalc);
-				calced += fmt.format(sampleFromDistribution - 1) + " ";
-
-			}
-
-			System.out.println("input  " + input);
-			System.out.println("expect " + expect);
-			System.out.println("calced " + calced);
-
-			/*
-			 * net.rnnClearPreviousState();
-			 * 
-			 * String expect = ""; String calced = "";
-			 * 
-			 * int startindex = (int) ((values.size() - 1 - sampleLangth) *
-			 * r.nextDouble()); DecimalFormat fmt = new DecimalFormat("+0;-0");
-			 * System.out.println(values.get(startindex)); for (int testIndex =
-			 * startindex; testIndex < startindex + sampleLangth; testIndex++) {
-			 * expect += fmt.format(values.get(testIndex + 1)) + " "; INDArray
-			 * testInit = Nd4j.zeros(3);
-			 * testInit.putScalar(values.get(testIndex) + 1, 1); INDArray output
-			 * = net.output(testInit); double[] dist = new double[] {
-			 * output.getDouble(0), output.getDouble(1), output.getDouble(2) };
-			 * int sampleFromDistribution = sampleFromDistribution(dist); calced
-			 * += fmt.format(sampleFromDistribution - 1) + " "; }
-			 * System.out.println("expect " + expect); System.out.println(
-			 * "calced " + calced);
-			 */
-
-			/*
-			 * net.rnnClearPreviousState();
-			 * 
-			 * INDArray testInit = Nd4j.zeros(LEARNSTRING_CHARS_LIST.size());
-			 * testInit.putScalar(LEARNSTRING_CHARS_LIST.indexOf(LEARNSTRING[0])
-			 * , 1);
-			 * 
-			 * INDArray output = net.rnnTimeStep(testInit);
-			 * 
-			 * for (int j = 0; j < LEARNSTRING.length; j++) {
-			 * 
-			 * // get chosen character of last output double[]
-			 * outputProbDistribution = new double[LEARNSTRING_CHARS.size()];
-			 * for (int k = 0; k < outputProbDistribution.length; k++) {
-			 * outputProbDistribution[k] = output.getDouble(k); } int
-			 * sampledCharacterIdx =
-			 * sampleFromDistribution(outputProbDistribution);
-			 * System.out.print(LEARNSTRING_CHARS_LIST.get(sampledCharacterIdx))
-			 * ;
-			 * 
-			 * // generate next input INDArray nextInput =
-			 * Nd4j.zeros(LEARNSTRING_CHARS_LIST.size());
-			 * nextInput.putScalar(sampledCharacterIdx, 1); output =
-			 * net.rnnTimeStep(nextInput);
-			 * 
-			 * } System.out.print("\n");
-			 */
 		}
+
+	}
+
+	private static void testNetwork(MultiLayerNetwork net, int samplesToInit, int samplesToPredict) {
+		net.rnnClearPreviousState();
+		DataSet learnDs = createDataset(1, samplesToInit + samplesToPredict);
+
+		INDArray lastOutput = Nd4j.zeros(3);
+
+		for (int i = 0; i < samplesToInit; i++) {
+			INDArray testInput = learnDs.getFeatureMatrix().tensorAlongDimension(i, 1, 0);
+			lastOutput = net.rnnTimeStep(testInput);
+		}
+
+		// expected balance for samplesToPredict
+		int targetTotal = 0;
+		// predicted balance for samplesToPredict
+		int predictedTotal = 0;
+
+		for (int i = samplesToInit; i < samplesToInit + samplesToPredict; i++) {
+			// add to expected balance
+			int target = sampleFromDistribution(learnDs.getLabels().tensorAlongDimension(i, 1, 0)) - 1;
+			targetTotal += target;
+
+			// add to predived balance
+			int predicted = sampleFromDistribution(lastOutput) - 1;
+			predictedTotal += predicted;
+
+			// predict next
+			lastOutput = net.rnnTimeStep(lastOutput);
+		}
+
+		System.out.println(samplesToInit + "/" + samplesToPredict + " exprected " + targetTotal + " predicted " + predictedTotal);
 
 	}
 
@@ -222,11 +178,11 @@ public class BitcoinRNNExampleHilo {
 		return ds;
 	}
 
-	private static int sampleFromDistribution(double[] distribution) {
+	private static int sampleFromDistribution(INDArray output) {
 		double d = r.nextDouble();
 		double sum = 0.0;
-		for (int i = 0; i < distribution.length; i++) {
-			sum += distribution[i];
+		for (int i = 0; i < output.size(1); i++) {
+			sum += output.getDouble(i);
 			if (d <= sum)
 				return i;
 		}
@@ -248,6 +204,8 @@ public class BitcoinRNNExampleHilo {
 		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("updater.bin"))) {
 			oos.writeObject(net.getUpdater());
 		}
+
+		System.out.println("Net saved");
 	}
 
 	private static MultiLayerNetwork load() throws FileNotFoundException, IOException, ClassNotFoundException {
@@ -265,7 +223,7 @@ public class BitcoinRNNExampleHilo {
 		MultiLayerNetwork savedNetwork = new MultiLayerNetwork(confFromJson);
 		savedNetwork.init();
 		// must be set before setUpdater()
-		savedNetwork.setListeners(new ScoreIterationListener(1));
+		savedNetwork.setListeners(new ScoreIterationListener(10));
 		savedNetwork.setParameters(newParams);
 
 		// Load the updater:
@@ -276,6 +234,8 @@ public class BitcoinRNNExampleHilo {
 
 		// Set the updater in the network
 		savedNetwork.setUpdater(updater);
+
+		System.out.println("Net loaded");
 
 		return savedNetwork;
 	}

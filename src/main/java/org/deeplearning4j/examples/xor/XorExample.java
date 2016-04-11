@@ -1,5 +1,18 @@
 package org.deeplearning4j.examples.xor;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.eval.Evaluation;
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -32,7 +45,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
  *
  */
 public class XorExample {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 
 		// list off input values, 4 training samples with data for 2
 		// input-neurons each
@@ -169,8 +182,17 @@ public class XorExample {
 		}
 		System.out.println("Total number of network parameters: " + totalNumParams);
 
+		try {
+			net = load();
+			System.out.println("net loaded");
+		} catch (Exception e) {
+			System.out.println("net not loaded " + e.getMessage());
+		}
+		
 		// here the actual learning takes place
 		net.fit(ds);
+		
+		save(net);
 
 		// create output for every training sample
 		INDArray output = net.output(ds.getFeatureMatrix());
@@ -182,5 +204,50 @@ public class XorExample {
 		eval.eval(ds.getLabels(), output);
 		System.out.println(eval.stats());
 
+	}
+	
+	private static void save(MultiLayerNetwork net) throws IOException {
+		// Write the network parameters:
+		try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("coefficients.bin")))) {
+			Nd4j.write(net.params(), dos);
+		}
+
+		// Write the network configuration:
+		FileUtils.write(new File("conf.json"), net.getLayerWiseConfigurations().toJson());
+
+		// Save the updater:
+		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("updater.bin"))) {
+			oos.writeObject(net.getUpdater());
+		}
+	}
+
+	private static MultiLayerNetwork load() throws FileNotFoundException, IOException, ClassNotFoundException {
+		// Load network configuration from disk:
+		MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
+
+		// Load parameters from disk:
+		INDArray newParams;
+		try (DataInputStream dis = new DataInputStream(new FileInputStream("coefficients.bin"))) {
+			newParams = Nd4j.read(dis);
+		}
+
+		// Create a MultiLayerNetwork from the saved configuration and
+		// parameters
+		MultiLayerNetwork savedNetwork = new MultiLayerNetwork(confFromJson);
+		savedNetwork.init();
+		// must be set before setUpdater()
+		savedNetwork.setListeners(new ScoreIterationListener(1));
+		savedNetwork.setParameters(newParams);
+
+		// Load the updater:
+		org.deeplearning4j.nn.api.Updater updater;
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("updater.bin"))) {
+			updater = (org.deeplearning4j.nn.api.Updater) ois.readObject();
+		}
+
+		// Set the updater in the network
+		savedNetwork.setUpdater(updater);
+
+		return savedNetwork;
 	}
 }
