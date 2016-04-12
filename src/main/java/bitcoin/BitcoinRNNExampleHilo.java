@@ -126,7 +126,7 @@ public class BitcoinRNNExampleHilo {
 
 		for (int i = 0; i < 10000; i++) {
 
-			if (false) {
+			if (true) {
 				// spark dataset
 				List<DataSet> list = new ArrayList<>();
 				for (int j = 0; j < nCores; j++) {
