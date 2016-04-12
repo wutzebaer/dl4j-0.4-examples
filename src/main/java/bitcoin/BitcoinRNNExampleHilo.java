@@ -13,12 +13,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.storage.StorageLevel;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -30,6 +33,7 @@ import org.deeplearning4j.nn.conf.layers.RnnOutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
+import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
@@ -44,13 +48,16 @@ public class BitcoinRNNExampleHilo {
 	public static final int HIDDEN_LAYER_CONT = 2;
 	public static final Random r = new Random(78945);
 	public static final List<Integer> values = new ArrayList<>();
-	public static final int sampleLangth = 1440/30 * 1; // 10080=7 tage 1440=1 tag
+	public static final int sampleLangth = 1440 / 30 * 1; // 10080=7 tage 1440=1
+															// tag
 	public static final int samplesPerDataset = 100;
 
 	public static void main(String[] args) throws NumberFormatException, IOException {
 
+		BitcoinChartLOader.main(args);
+
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
-		builder.iterations(100);
+		builder.iterations(10);
 		builder.learningRate(0.01);
 		builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
 		builder.seed(123);
@@ -108,21 +115,42 @@ public class BitcoinRNNExampleHilo {
 		is.close();
 		System.out.println(values.size());
 
-		for (int i = 0; i < 10000; i++) {
-			DataSet learnDs = createDataset(samplesPerDataset, sampleLangth);
+		// spark config
+		int nCores = 4;
+		SparkConf sparkConf = new SparkConf();
+		sparkConf.setMaster("local[" + nCores + "]");
+		sparkConf.setAppName("LSTM_Char");
+		sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+		JavaSparkContext sc = new JavaSparkContext(sparkConf);
+		SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
 
-			net.fit(learnDs);
+		for (int i = 0; i < 10000; i++) {
+
+			if (false) {
+				// spark dataset
+				List<DataSet> list = new ArrayList<>();
+				for (int j = 0; j < nCores; j++) {
+					list.add(createDataset(samplesPerDataset, sampleLangth));
+				}
+				JavaRDD<DataSet> datasets = sc.parallelize(list);
+				datasets.persist(StorageLevel.MEMORY_ONLY());
+				net = sparkNetwork.fitDataSet(datasets);
+			} else {
+				// normal
+				DataSet learnDs = createDataset(samplesPerDataset, sampleLangth);
+				net.fit(learnDs);
+			}
 
 			save(net);
 
 			testNetwork(net, sampleLangth, sampleLangth);
 			testNetwork(net, sampleLangth, sampleLangth);
 			testNetwork(net, sampleLangth, sampleLangth);
-			
+
 			testNetwork(net, sampleLangth, sampleLangth / 2);
 			testNetwork(net, sampleLangth, sampleLangth / 2);
 			testNetwork(net, sampleLangth, sampleLangth / 2);
-			
+
 			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
 			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
 			testNetwork(net, sampleLangth / 2, sampleLangth / 2);

@@ -51,22 +51,6 @@
     </distributionManagement>
 
     <dependencies>
-   		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20141113</version>
-		</dependency>
-        <dependency>
-            <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-nlp</artifactId>
-            <version>${dl4j.version}</version>
-            <exclusions>
-            	<exclusion>
-            		<artifactId>nd4j-api</artifactId>
-            		<groupId>org.nd4j</groupId>
-            	</exclusion>
-            </exclusions>
-        </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-core</artifactId>
@@ -74,48 +58,32 @@
         </dependency>
         <dependency>
             <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-ui</artifactId>
+            <artifactId>dl4j-spark</artifactId>
             <version>${dl4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>org.nd4j</groupId>
             <artifactId>nd4j-x86</artifactId>
             <!-- <artifactId>nd4j-cuda-7.5</artifactId> -->
-            <!-- <artifactId>nd4j-naive</artifactId> -->
+            <!-- <artifactId>nd4j-native</artifactId> -->
             <version>${nd4j.version}</version>
         </dependency>
+
+
         <dependency>
-            <artifactId>canova-nd4j-image</artifactId>
-            <groupId>org.nd4j</groupId>
-            <version>${canova.version}</version>
-            <exclusions>
-            	<exclusion>
-            		<artifactId>nd4j-api</artifactId>
-            		<groupId>org.nd4j</groupId>
-            	</exclusion>
-            </exclusions>
+        	<groupId>org.apache.httpcomponents</groupId>
+        	<artifactId>httpclient</artifactId>
+        	<version>4.5.1</version>
         </dependency>
         <dependency>
-            <artifactId>canova-nd4j-codec</artifactId>
-            <groupId>org.nd4j</groupId>
-            <version>${canova.version}</version>
-            <exclusions>
-            	<exclusion>
-            		<artifactId>nd4j-api</artifactId>
-            		<groupId>org.nd4j</groupId>
-            	</exclusion>
-            </exclusions>
+        	<groupId>com.google.guava</groupId>
+        	<artifactId>guava</artifactId>
+        	<version>19.0</version>
         </dependency>
-        <!-- Used in the RegressionMathFunctions example -->
         <dependency>
-            <groupId>jfree</groupId>
-            <artifactId>jfreechart</artifactId>
-            <version>${jfreechart.version}</version>
+        	<groupId>org.apache.commons</groupId>
+        	<artifactId>commons-collections4</artifactId>
+        	<version>4.0</version>
         </dependency>
     </dependencies>
 

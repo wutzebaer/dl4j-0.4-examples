@@ -83,8 +83,8 @@ public class SaveLoad {
         MultiLayerNetwork net = new MultiLayerNetwork(conf);
         net.init();
 
-        INDArray input = Nd4j.zeros(10, 3, 144*3);
-        INDArray labels = Nd4j.zeros(10, 3, 144*3);
+        INDArray input = Nd4j.zeros(10, 3, 144);
+        INDArray labels = Nd4j.zeros(10, 3, 144);
 
         net.fit(new DataSet(input, labels));
         net.fit(new DataSet(input, labels));
