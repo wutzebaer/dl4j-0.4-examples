@@ -118,7 +118,7 @@ public class BitcoinRNNExampleHilo {
 		// spark config
 		int nCores = 4;
 		SparkConf sparkConf = new SparkConf();
-		sparkConf.setMaster("local[" + nCores + "]");
+		//sparkConf.setMaster("local[" + nCores + "]");
 		sparkConf.setAppName("LSTM_Char");
 		sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
 		JavaSparkContext sc = new JavaSparkContext(sparkConf);
