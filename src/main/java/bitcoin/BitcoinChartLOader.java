@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -35,7 +37,7 @@ public class BitcoinChartLOader {
 	private static final int ZU_MERGENDE_ZEILEN = 30;
 	private static final int RUNDEN_AUF_NACHKOMMASTELLEN = 1;
 
-	public static void main(String[] args) throws ClientProtocolException, IOException {
+	public static void main(String[] args) throws ClientProtocolException, IOException, JSONException {
 		createCoursesLog();
 		createCleanBpi();
 		mergeTimestamps();
@@ -145,7 +147,7 @@ public class BitcoinChartLOader {
 		System.out.println(lines);
 	}
 
-	private static void createCoursesLog() throws IOException, ClientProtocolException, FileNotFoundException {
+	private static void createCoursesLog() throws IOException, ClientProtocolException, FileNotFoundException, JSONException {
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		CloseableHttpClient client = HttpClientBuilder.create().build();
@@ -217,7 +219,7 @@ public class BitcoinChartLOader {
 				}
 
 				FileInputStream fis = new FileInputStream(tmpfile);
-				JSONObject data = new JSONObject(new JSONTokener(fis));
+				JSONObject data = new JSONObject(new JSONTokener(new InputStreamReader(fis)));
 
 				fis.close();
 

@@ -1,6 +1,7 @@
 package bitcoin;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -21,7 +22,7 @@ public class BitcoinChartLOaderV2 {
 
 	public static JSONObject getCUrrentPrice() throws Exception {
 		InputStream dataStream = HttpClientBuilder.create().build().execute(new HttpGet("https://btc-e.com/api/2/btc_usd/ticker")).getEntity().getContent();
-		JSONObject array = new JSONObject(new JSONTokener(dataStream)).getJSONObject("ticker");
+		JSONObject array = new JSONObject(new JSONTokener(new InputStreamReader(dataStream))).getJSONObject("ticker");
 		dataStream.close();
 		return array;
 	}

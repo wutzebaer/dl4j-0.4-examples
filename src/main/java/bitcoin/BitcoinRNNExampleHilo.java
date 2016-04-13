@@ -34,6 +34,7 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer;
+import org.json.JSONException;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
@@ -52,9 +53,9 @@ public class BitcoinRNNExampleHilo {
 															// tag
 	public static final int samplesPerDataset = 100;
 
-	public static void main(String[] args) throws NumberFormatException, IOException {
+	public static void main(String[] args) throws NumberFormatException, IOException, JSONException {
 
-		BitcoinChartLOader.main(args);
+		//BitcoinChartLOader.main(args);
 
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
 		builder.iterations(10);
@@ -68,7 +69,7 @@ public class BitcoinRNNExampleHilo {
 
 		builder.biasInit(0);
 		builder.miniBatch(true);
-		builder.updater(Updater.RMSPROP);
+		
 
 		// builder.weightInit(WeightInit.XAVIER);
 		builder.weightInit(WeightInit.DISTRIBUTION);
@@ -81,6 +82,7 @@ public class BitcoinRNNExampleHilo {
 			hiddenLayerBuilder.nIn(i == 0 ? 3 : HIDDEN_LAYER_WIDTH);
 			hiddenLayerBuilder.nOut(HIDDEN_LAYER_WIDTH);
 			hiddenLayerBuilder.activation("tanh");
+			hiddenLayerBuilder.updater(Updater.RMSPROP);
 			listBuilder.layer(i, hiddenLayerBuilder.build());
 		}
 
@@ -88,6 +90,7 @@ public class BitcoinRNNExampleHilo {
 		outputLayerBuilder.activation("softmax");
 		outputLayerBuilder.nIn(HIDDEN_LAYER_WIDTH);
 		outputLayerBuilder.nOut(3);
+		outputLayerBuilder.updater(Updater.RMSPROP);
 		listBuilder.layer(HIDDEN_LAYER_CONT, outputLayerBuilder.build());
 
 		listBuilder.pretrain(false);
@@ -97,6 +100,7 @@ public class BitcoinRNNExampleHilo {
 		MultiLayerConfiguration conf = listBuilder.build();
 		MultiLayerNetwork net = new MultiLayerNetwork(conf);
 		net.init();
+		net.setUpdater(null);
 		net.setListeners(new ScoreIterationListener(10));
 
 		try {
@@ -118,7 +122,7 @@ public class BitcoinRNNExampleHilo {
 		// spark config
 		int nCores = 4;
 		SparkConf sparkConf = new SparkConf();
-		//sparkConf.setMaster("local[" + nCores + "]");
+		sparkConf.setMaster("local[" + nCores + "]");
 		sparkConf.setAppName("LSTM_Char");
 		sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
 		JavaSparkContext sc = new JavaSparkContext(sparkConf);
