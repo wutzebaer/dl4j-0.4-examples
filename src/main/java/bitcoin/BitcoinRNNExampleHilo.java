@@ -55,10 +55,12 @@ public class BitcoinRNNExampleHilo {
 
 	public static void main(String[] args) throws NumberFormatException, IOException, JSONException {
 
-		//BitcoinChartLOader.main(args);
+		System.out.println(System.getProperty("java.library.path"));
+		
+		// BitcoinChartLOader.main(args);
 
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
-		builder.iterations(10);
+		builder.iterations(100);
 		builder.learningRate(0.01);
 		builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
 		builder.seed(123);
@@ -69,7 +71,6 @@ public class BitcoinRNNExampleHilo {
 
 		builder.biasInit(0);
 		builder.miniBatch(true);
-		
 
 		// builder.weightInit(WeightInit.XAVIER);
 		builder.weightInit(WeightInit.DISTRIBUTION);
@@ -100,8 +101,8 @@ public class BitcoinRNNExampleHilo {
 		MultiLayerConfiguration conf = listBuilder.build();
 		MultiLayerNetwork net = new MultiLayerNetwork(conf);
 		net.init();
-		net.setUpdater(null);
 		net.setListeners(new ScoreIterationListener(10));
+		net.setUpdater(null);
 
 		try {
 			net = load();
@@ -119,18 +120,24 @@ public class BitcoinRNNExampleHilo {
 		is.close();
 		System.out.println(values.size());
 
-		// spark config
-		int nCores = 4;
-		SparkConf sparkConf = new SparkConf();
-		sparkConf.setMaster("local[" + nCores + "]");
-		sparkConf.setAppName("LSTM_Char");
-		sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
-		JavaSparkContext sc = new JavaSparkContext(sparkConf);
-		SparkDl4jMultiLayer sparkNetwork = new SparkDl4jMultiLayer(sc, net);
+		final boolean SPARK = false;
+		SparkDl4jMultiLayer sparkNetwork;
+		JavaSparkContext sc;
+		int nCores = 16;
+
+		if (SPARK) {
+			// spark config
+			SparkConf sparkConf = new SparkConf();
+			sparkConf.setMaster("local[" + nCores + "]");
+			sparkConf.setAppName("LSTM_Char");
+			sparkConf.set(SparkDl4jMultiLayer.AVERAGE_EACH_ITERATION, String.valueOf(true));
+			sc = new JavaSparkContext(sparkConf);
+			sparkNetwork = new SparkDl4jMultiLayer(sc, net);
+		}
 
 		for (int i = 0; i < 10000; i++) {
 
-			if (true) {
+			if (SPARK) {
 				// spark dataset
 				List<DataSet> list = new ArrayList<>();
 				for (int j = 0; j < nCores; j++) {
@@ -147,17 +154,14 @@ public class BitcoinRNNExampleHilo {
 
 			save(net);
 
-			testNetwork(net, sampleLangth, sampleLangth);
-			testNetwork(net, sampleLangth, sampleLangth);
-			testNetwork(net, sampleLangth, sampleLangth);
+			for (int t = 0; t < 10; t++)
+				testNetwork(net, sampleLangth, sampleLangth);
 
-			testNetwork(net, sampleLangth, sampleLangth / 2);
-			testNetwork(net, sampleLangth, sampleLangth / 2);
-			testNetwork(net, sampleLangth, sampleLangth / 2);
+			for (int t = 0; t < 10; t++)
+				testNetwork(net, sampleLangth, sampleLangth / 2);
 
-			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
-			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
-			testNetwork(net, sampleLangth / 2, sampleLangth / 2);
+			for (int t = 0; t < 10; t++)
+				testNetwork(net, sampleLangth / 2, sampleLangth / 2);
 
 		}
 
