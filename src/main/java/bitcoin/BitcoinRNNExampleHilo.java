@@ -48,7 +48,6 @@ public class BitcoinRNNExampleHilo {
 	public static final int HIDDEN_LAYER_WIDTH = 40;
 	public static final int HIDDEN_LAYER_CONT = 2;
 	public static final Random r = new Random(78945);
-	public static final List<Integer> values = new ArrayList<>();
 	public static final int sampleLangth = 1440 / 30 * 1; // 10080=7 tage 1440=1
 															// tag
 	public static final int samplesPerDataset = 100;
@@ -110,15 +109,7 @@ public class BitcoinRNNExampleHilo {
 			System.out.println("net not loaded " + e.getMessage());
 		}
 
-		// load values
-		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed_merged_hilo.log"));
-		String line;
-		while ((line = is.readLine()) != null) {
-			String[] splits = line.split(",");
-			values.add(Integer.valueOf(splits[1]));
-		}
-		is.close();
-		System.out.println(values.size());
+		List<Integer> values = loadValues();
 
 		final boolean SPARK = false;
 		SparkDl4jMultiLayer sparkNetwork;
@@ -141,35 +132,49 @@ public class BitcoinRNNExampleHilo {
 				// spark dataset
 				List<DataSet> list = new ArrayList<>();
 				for (int j = 0; j < nCores; j++) {
-					list.add(createDataset(samplesPerDataset, sampleLangth));
+					list.add(createDataset(values, samplesPerDataset, sampleLangth));
 				}
 				JavaRDD<DataSet> datasets = sc.parallelize(list);
 				datasets.persist(StorageLevel.MEMORY_ONLY());
 				net = sparkNetwork.fitDataSet(datasets);
 			} else {
 				// normal
-				DataSet learnDs = createDataset(samplesPerDataset, sampleLangth);
+				DataSet learnDs = createDataset(values, samplesPerDataset, sampleLangth);
 				net.fit(learnDs);
 			}
 
 			save(net);
 
 			for (int t = 0; t < 10; t++)
-				testNetwork(net, sampleLangth, sampleLangth);
+				testNetwork(values, net, sampleLangth, sampleLangth, true);
 
 			for (int t = 0; t < 10; t++)
-				testNetwork(net, sampleLangth, sampleLangth / 2);
+				testNetwork(values, net, sampleLangth, sampleLangth / 2, true);
 
 			for (int t = 0; t < 10; t++)
-				testNetwork(net, sampleLangth / 2, sampleLangth / 2);
+				testNetwork(values, net, sampleLangth / 2, sampleLangth / 2, true);
 
 		}
 
 	}
 
-	private static void testNetwork(MultiLayerNetwork net, int samplesToInit, int samplesToPredict) {
+	protected static List<Integer> loadValues() throws FileNotFoundException, IOException {
+		List<Integer> values = new ArrayList<>();
+		// load values
+		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed_merged_hilo.log"));
+		String line;
+		while ((line = is.readLine()) != null) {
+			String[] splits = line.split(",");
+			values.add(Integer.valueOf(splits[1]));
+		}
+		is.close();
+		System.out.println(values.size());
+		return values;
+	}
+
+	protected static boolean testNetwork(List<Integer> values, MultiLayerNetwork net, int samplesToInit, int samplesToPredict, boolean print) {
 		net.rnnClearPreviousState();
-		DataSet learnDs = createDataset(1, samplesToInit + samplesToPredict);
+		DataSet learnDs = createDataset(values, 1, samplesToInit + samplesToPredict);
 
 		INDArray lastOutput = Nd4j.zeros(3);
 
@@ -196,11 +201,16 @@ public class BitcoinRNNExampleHilo {
 			lastOutput = net.rnnTimeStep(lastOutput);
 		}
 
-		System.out.println(samplesToInit + "/" + samplesToPredict + " exprected " + targetTotal + " predicted " + predictedTotal);
+		if(print)
+			System.out.println(samplesToInit + "/" + samplesToPredict + " exprected " + targetTotal + " predicted " + predictedTotal);
 
+		if(targetTotal > 0 && predictedTotal > 0) return true;
+		else if(targetTotal < 0 && predictedTotal < 0) return true;
+		else if(targetTotal == 0 && predictedTotal == 0) return true;
+		else return false;
 	}
 
-	private static DataSet createDataset(int samplesPerDataset, int sampleLangth) {
+	private static DataSet createDataset(List<Integer> values, int samplesPerDataset, int sampleLangth) {
 		INDArray input = Nd4j.zeros(samplesPerDataset, 3, sampleLangth);
 		INDArray labels = Nd4j.zeros(samplesPerDataset, 3, sampleLangth);
 		for (int sampleindex = 0; sampleindex < samplesPerDataset; sampleindex++) {
@@ -244,7 +254,7 @@ public class BitcoinRNNExampleHilo {
 		System.out.println("Net saved");
 	}
 
-	private static MultiLayerNetwork load() throws FileNotFoundException, IOException, ClassNotFoundException {
+	protected static MultiLayerNetwork load() throws FileNotFoundException, IOException, ClassNotFoundException {
 		// Load network configuration from disk:
 		MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
 
