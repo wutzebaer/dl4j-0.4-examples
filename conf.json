@@ -1,0 +1,147 @@
+{
+  "backprop" : true,
+  "backpropType" : "Standard",
+  "confs" : [ {
+    "layer" : {
+      "gravesLSTM" : {
+        "activationFunction" : "tanh",
+        "adamMeanDecay" : 0.9,
+        "adamVarDecay" : 0.999,
+        "biasInit" : 0.0,
+        "dist" : {
+          "uniform" : {
+            "lower" : -1.0,
+            "upper" : 1.0
+          }
+        },
+        "dropOut" : 0.0,
+        "forgetGateBiasInit" : 1.0,
+        "gradientNormalization" : "None",
+        "gradientNormalizationThreshold" : 1.0,
+        "l1" : 0.0,
+        "l2" : 0.0,
+        "layerName" : "genisys",
+        "learningRate" : 0.01,
+        "learningRateAfter" : { },
+        "lrScoreBasedDecay" : 0.0,
+        "momentum" : 0.5,
+        "momentumAfter" : { },
+        "nin" : 3,
+        "nout" : 40,
+        "rho" : 0.0,
+        "rmsDecay" : 0.95,
+        "updater" : "RMSPROP",
+        "weightInit" : "DISTRIBUTION"
+      }
+    },
+    "maxNumLineSearchIterations" : 5,
+    "miniBatch" : true,
+    "minimize" : true,
+    "numIterations" : 100,
+    "optimizationAlgo" : "STOCHASTIC_GRADIENT_DESCENT",
+    "seed" : 123,
+    "stepFunction" : null,
+    "timeSeriesLength" : 1,
+    "useDropConnect" : false,
+    "useRegularization" : false,
+    "useSchedules" : false,
+    "variables" : [ "W", "RW", "b" ]
+  }, {
+    "layer" : {
+      "gravesLSTM" : {
+        "activationFunction" : "tanh",
+        "adamMeanDecay" : 0.9,
+        "adamVarDecay" : 0.999,
+        "biasInit" : 0.0,
+        "dist" : {
+          "uniform" : {
+            "lower" : -1.0,
+            "upper" : 1.0
+          }
+        },
+        "dropOut" : 0.0,
+        "forgetGateBiasInit" : 1.0,
+        "gradientNormalization" : "None",
+        "gradientNormalizationThreshold" : 1.0,
+        "l1" : 0.0,
+        "l2" : 0.0,
+        "layerName" : "genisys",
+        "learningRate" : 0.01,
+        "learningRateAfter" : { },
+        "lrScoreBasedDecay" : 0.0,
+        "momentum" : 0.5,
+        "momentumAfter" : { },
+        "nin" : 40,
+        "nout" : 40,
+        "rho" : 0.0,
+        "rmsDecay" : 0.95,
+        "updater" : "RMSPROP",
+        "weightInit" : "DISTRIBUTION"
+      }
+    },
+    "maxNumLineSearchIterations" : 5,
+    "miniBatch" : true,
+    "minimize" : true,
+    "numIterations" : 100,
+    "optimizationAlgo" : "STOCHASTIC_GRADIENT_DESCENT",
+    "seed" : 123,
+    "stepFunction" : null,
+    "timeSeriesLength" : 1,
+    "useDropConnect" : false,
+    "useRegularization" : false,
+    "useSchedules" : false,
+    "variables" : [ "W", "RW", "b" ]
+  }, {
+    "layer" : {
+      "rnnoutput" : {
+        "activationFunction" : "softmax",
+        "adamMeanDecay" : 0.9,
+        "adamVarDecay" : 0.999,
+        "biasInit" : 0.0,
+        "customLossFunction" : null,
+        "dist" : {
+          "uniform" : {
+            "lower" : -1.0,
+            "upper" : 1.0
+          }
+        },
+        "dropOut" : 0.0,
+        "gradientNormalization" : "None",
+        "gradientNormalizationThreshold" : 1.0,
+        "l1" : 0.0,
+        "l2" : 0.0,
+        "layerName" : "genisys",
+        "learningRate" : 0.01,
+        "learningRateAfter" : { },
+        "lossFunction" : "MCXENT",
+        "lrScoreBasedDecay" : 0.0,
+        "momentum" : 0.5,
+        "momentumAfter" : { },
+        "nin" : 40,
+        "nout" : 3,
+        "rho" : 0.0,
+        "rmsDecay" : 0.95,
+        "updater" : "RMSPROP",
+        "weightInit" : "DISTRIBUTION"
+      }
+    },
+    "maxNumLineSearchIterations" : 5,
+    "miniBatch" : true,
+    "minimize" : true,
+    "numIterations" : 100,
+    "optimizationAlgo" : "STOCHASTIC_GRADIENT_DESCENT",
+    "seed" : 123,
+    "stepFunction" : null,
+    "timeSeriesLength" : 1,
+    "useDropConnect" : false,
+    "useRegularization" : false,
+    "useSchedules" : false,
+    "variables" : [ "W", "b" ]
+  } ],
+  "dampingFactor" : 100.0,
+  "inputPreProcessors" : { },
+  "pretrain" : false,
+  "redistributeParams" : false,
+  "tbpttBackLength" : 20,
+  "tbpttFwdLength" : 20
+}

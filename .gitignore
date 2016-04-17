@@ -17,10 +17,8 @@ dependency-reduced-pom.xml
 application.home_IS_UNDEFINEiD
 README.md~
 *.png
-*.bin
 *.releaseBackup
 *.png
-*.bin
 *.out
 *~
 .pydevproject
@@ -40,5 +38,4 @@ metastore_db
 *.html
 Word2vec-index/
 *.conf
-*.json
 
