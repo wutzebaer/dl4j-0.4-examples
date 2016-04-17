@@ -50,7 +50,7 @@ public class BitcoinRNNExampleHilo {
 	public static final Random r = new Random(78945);
 	public static final int sampleLangth = 1440 / 30 * 1; // 10080=7 tage 1440=1
 															// tag
-	public static final int samplesPerDataset = 100;
+	public static final int samplesPerDataset = 1000;
 
 	public static void main(String[] args) throws NumberFormatException, IOException, JSONException {
 
