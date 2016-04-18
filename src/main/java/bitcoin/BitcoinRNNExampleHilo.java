@@ -45,7 +45,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction;
  */
 public class BitcoinRNNExampleHilo {
 
-	public static final int HIDDEN_LAYER_WIDTH = 40;
+	public static final int HIDDEN_LAYER_WIDTH = 80;
 	public static final int HIDDEN_LAYER_CONT = 2;
 	public static final Random r = new Random(78945);
 	public static final int sampleLangth = 1440 / 30 * 1; // 10080=7 tage 1440=1
