@@ -175,6 +175,44 @@ public class BitcoinRNNExampleHilo {
 	protected static boolean testNetwork(List<Integer> values, MultiLayerNetwork net, int samplesToInit, int samplesToPredict, boolean print) {
 		net.rnnClearPreviousState();
 		DataSet learnDs = createDataset(values, 1, samplesToInit + samplesToPredict);
+		
+		INDArray lastOutput = Nd4j.zeros(3);
+		
+		for (int i = 0; i < samplesToInit; i++) {
+			INDArray testInput = learnDs.getFeatureMatrix().tensorAlongDimension(i, 1, 0);
+			lastOutput = net.rnnTimeStep(testInput);
+		}
+		
+		// expected balance for samplesToPredict
+		int targetTotal = 0;
+		// predicted balance for samplesToPredict
+		int predictedTotal = 0;
+		
+		for (int i = samplesToInit; i < samplesToInit + samplesToPredict; i++) {
+			// add to expected balance
+			int target = sampleFromDistribution(learnDs.getLabels().tensorAlongDimension(i, 1, 0)) - 1;
+			targetTotal += target;
+			
+			// add to predived balance
+			int predicted = sampleFromDistribution(lastOutput) - 1;
+			predictedTotal += predicted;
+			
+			// predict next
+			lastOutput = net.rnnTimeStep(lastOutput);
+		}
+		
+		if(print)
+			System.out.println(samplesToInit + "/" + samplesToPredict + " exprected " + targetTotal + " predicted " + predictedTotal);
+		
+		if(targetTotal > 0 && predictedTotal > 0) return true;
+		else if(targetTotal < 0 && predictedTotal < 0) return true;
+		else if(targetTotal == 0 && predictedTotal == 0) return true;
+		else return false;
+	}
+	
+	protected static int testNetworkError(List<Integer> values, MultiLayerNetwork net, int samplesToInit, int samplesToPredict, boolean print) {
+		net.rnnClearPreviousState();
+		DataSet learnDs = createDataset(values, 1, samplesToInit + samplesToPredict);
 
 		INDArray lastOutput = Nd4j.zeros(3);
 
@@ -204,10 +242,7 @@ public class BitcoinRNNExampleHilo {
 		if(print)
 			System.out.println(samplesToInit + "/" + samplesToPredict + " exprected " + targetTotal + " predicted " + predictedTotal);
 
-		if(targetTotal > 0 && predictedTotal > 0) return true;
-		else if(targetTotal < 0 && predictedTotal < 0) return true;
-		else if(targetTotal == 0 && predictedTotal == 0) return true;
-		else return false;
+		return targetTotal - predictedTotal;
 	}
 
 	private static DataSet createDataset(List<Integer> values, int samplesPerDataset, int sampleLangth) {
