@@ -55,7 +55,7 @@ public class BitcoinRNNExampleHilo {
 	public static void main(String[] args) throws NumberFormatException, IOException, JSONException {
 
 		System.out.println(System.getProperty("java.library.path"));
-		
+
 		// BitcoinChartLOader.main(args);
 
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
@@ -172,7 +172,17 @@ public class BitcoinRNNExampleHilo {
 		return values;
 	}
 
-	protected static boolean testNetwork(List<Integer> values, MultiLayerNetwork net, int samplesToInit, int samplesToPredict, boolean print) {
+	public static class TestResult {
+		int expect;
+		int predict;
+
+		public TestResult(int expect, int predict) {
+			this.expect = expect;
+			this.predict = predict;
+		}
+	}
+
+	protected static TestResult testNetwork(List<Integer> values, MultiLayerNetwork net, int samplesToInit, int samplesToPredict, boolean print) {
 		net.rnnClearPreviousState();
 		DataSet learnDs = createDataset(values, 1, samplesToInit + samplesToPredict);
 
@@ -201,13 +211,10 @@ public class BitcoinRNNExampleHilo {
 			lastOutput = net.rnnTimeStep(lastOutput);
 		}
 
-		if(print)
+		if (print)
 			System.out.println(samplesToInit + "/" + samplesToPredict + " exprected " + targetTotal + " predicted " + predictedTotal);
 
-		if(targetTotal > 0 && predictedTotal > 0) return true;
-		else if(targetTotal < 0 && predictedTotal < 0) return true;
-		else if(targetTotal == 0 && predictedTotal == 0) return true;
-		else return false;
+		return new TestResult(targetTotal, predictedTotal);
 	}
 
 	private static DataSet createDataset(List<Integer> values, int samplesPerDataset, int sampleLangth) {
