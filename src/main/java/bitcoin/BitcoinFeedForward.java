@@ -30,13 +30,13 @@ public class BitcoinFeedForward {
 
 	static final double factor = 800;
 	static final Random r = new Random(7894);
-	static final int historycount = 1440 / 30 * 7;
-	static final int futurecount = 1440 / 30 * 2;
+	static final int historycount = 1440 / 30 * 3;
+	static final int futurecount = 1440 / 30 * 1;
 	static final double minPlus = 4.5 / factor;
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 	static final LinkedBlockingQueue<DataSet> asyncInserts = new LinkedBlockingQueue<>(2);
-	static final int hiddenLayerCount = 100;
+	static final int hiddenLayerCount = 10;
 	static final int hiddenLayerWidth = 50;
 
 	static final int samplesPerDataSet = 1000;
@@ -54,24 +54,25 @@ public class BitcoinFeedForward {
 		System.out.println(values.size());
 
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
-		builder.iterations(20);
+		builder.iterations(100);
 		builder.learningRate(1e-2);
 		builder.seed(123);
 
-		// builder.setDropOut(0.5);
+		//builder.useDropConnect(true);
+		builder.setDropOut(0.5);
 
 		//builder.setUseRegularization(true);
 		//builder.l1(1);
 		//builder.l2(1);
 
 		builder.momentum(0.9);
-		builder.updater(Updater.NESTEROVS);
+		builder.updater(Updater.SGD);
 
-		builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
+		builder.optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT);
 		builder.biasInit(1);
 		builder.miniBatch(true);
 		builder.weightInit(WeightInit.XAVIER);
-		builder.activation("sigmoid");
+		builder.activation("identity");
 		//builder.gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue);
 
 		ListBuilder listBuilder = builder.list();
@@ -85,7 +86,7 @@ public class BitcoinFeedForward {
 		Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT);
 		outputLayerBuilder.nIn(hiddenLayerWidth);
 		outputLayerBuilder.nOut(1);
-		outputLayerBuilder.activation("sigmoid");
+		outputLayerBuilder.activation("identity");
 		listBuilder.layer(hiddenLayerCount, outputLayerBuilder.build());
 
 		listBuilder.pretrain(false);
