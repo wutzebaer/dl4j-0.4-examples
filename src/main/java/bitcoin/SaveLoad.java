@@ -95,7 +95,7 @@ public class SaveLoad {
         System.out.println("works");
     }
 
-    private static void save(MultiLayerNetwork net) throws IOException {
+    public static void save(MultiLayerNetwork net) throws IOException {
         // Write the network parameters:
         try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("coefficients.bin")))) {
             Nd4j.write(net.params(), dos);
@@ -110,7 +110,7 @@ public class SaveLoad {
         }
     }
 
-    private static MultiLayerNetwork load() throws FileNotFoundException, IOException, ClassNotFoundException {
+    public static MultiLayerNetwork load() throws FileNotFoundException, IOException, ClassNotFoundException {
         // Load network configuration from disk:
         MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
 
