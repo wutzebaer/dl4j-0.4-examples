@@ -30,14 +30,14 @@ public class BitcoinFeedForward {
 
 	static final double factor = 800;
 	static final Random r = new Random(7894);
-	static final int historycount = 1440 / 30 * 3;
+	static final int historycount = 1440 / 30 * 7;
 	static final int futurecount = 1440 / 30 * 1;
-	static final double minPlus = 4.5 / factor;
+	static final double minPlus = 3 / factor;
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 	static final LinkedBlockingQueue<DataSet> asyncInserts = new LinkedBlockingQueue<>(2);
-	static final int hiddenLayerCount = 10;
-	static final int hiddenLayerWidth = 50;
+	static final int hiddenLayerCount = 100;
+	static final int hiddenLayerWidth = historycount;
 
 	static final int samplesPerDataSet = 1000;
 
@@ -54,18 +54,17 @@ public class BitcoinFeedForward {
 		System.out.println(values.size());
 
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
-		builder.iterations(100);
-		builder.learningRate(1e-2);
+		builder.iterations(1);
+		builder.learningRate(1e-3);
 		builder.seed(123);
 
-		//builder.useDropConnect(true);
-		builder.setDropOut(0.5);
-
-		//builder.setUseRegularization(true);
-		//builder.l1(1);
-		//builder.l2(1);
-
+		builder.regularization(true);
+		builder.useDropConnect(true);
+		builder.l1(2e-1);
+		builder.l2(2e-4);
 		builder.momentum(0.9);
+
+
 		builder.updater(Updater.SGD);
 
 		builder.optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT);
@@ -73,7 +72,7 @@ public class BitcoinFeedForward {
 		builder.miniBatch(true);
 		builder.weightInit(WeightInit.XAVIER);
 		builder.activation("identity");
-		//builder.gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue);
+		// builder.gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue);
 
 		ListBuilder listBuilder = builder.list();
 		for (int i = 0; i < hiddenLayerCount; i++) {
@@ -83,7 +82,7 @@ public class BitcoinFeedForward {
 			listBuilder.layer(i, hiddenLayerBuilder.build());
 		}
 
-		Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT);
+		Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.MSE);
 		outputLayerBuilder.nIn(hiddenLayerWidth);
 		outputLayerBuilder.nOut(1);
 		outputLayerBuilder.activation("identity");
@@ -106,9 +105,14 @@ public class BitcoinFeedForward {
 			net.fit(ds);
 		}
 
-		while (true) {
-			testRun(net);
+		TestStatistic testStatistic = new TestStatistic();
+		for (int t = 0; t < 10000; t++) {
+			testRun(net, testStatistic);
 		}
+		System.out.println("Expected positives " + testStatistic.expectPositive);
+		System.out.println("Found    positives " + testStatistic.predictedPositive);
+		System.out.println("False    positives " + testStatistic.falsePositive);
+		
 	}
 
 	private static void spawnSampleThread() {
@@ -124,16 +128,28 @@ public class BitcoinFeedForward {
 		}).start();
 	}
 
-	private static void testRun(MultiLayerNetwork net) {
+	final static class TestStatistic {
+		int expectPositive = 0;
+		int falsePositive = 0;
+		int predictedPositive = 0;
+	}
+
+	private static void testRun(MultiLayerNetwork net, TestStatistic testStatistic) {
 		int startindex = (int) ((values.size() - (historycount + futurecount)) * r.nextDouble());
 		INDArray input = Nd4j.zeros(1, historycount);
 		INDArray labels = Nd4j.zeros(1, 1);
 		fillFromStartIndex(input, labels, 0, startindex);
 		INDArray testOutput = net.output(input);
-		
-		System.out.println(new Date(timestamps.get(startindex)));
-		System.out.println("sollte: " + labels.getDouble(0, 0));
-		System.out.println("ist   : " + testOutput.getDouble(0, 0));
+
+		if (labels.getDouble(0, 0) == 1)
+			testStatistic.expectPositive++;
+
+		if (labels.getDouble(0, 0) == 1 && testOutput.getDouble(0, 0) > 0.9)
+			testStatistic.predictedPositive++;
+
+		if (labels.getDouble(0, 0) == 0 && testOutput.getDouble(0, 0) > 0.9)
+			testStatistic.falsePositive++;
+
 	}
 
 	private static DataSet createDataset(int samplesPerDataset) {
@@ -150,25 +166,27 @@ public class BitcoinFeedForward {
 			total++;
 		}
 		DataSet ds = new DataSet(input, labels);
-		System.out.println((double) positives / total);
+		// System.out.println((double) positives / total);
 		return ds;
 	}
 
 	private static void fillFromStartIndex(INDArray input, INDArray labels, int sampleindex, int startindex) {
-		
+
 		double firstvalue = values.get(startindex);
 		for (int samplePos = 0; samplePos < historycount; samplePos++) {
 			input.putScalar(new int[] { sampleindex, samplePos }, values.get(startindex + samplePos) - firstvalue);
 		}
-		
+
 		labels.putScalar(new int[] { sampleindex, 0 }, 0);
 		double lastvalue = values.get(startindex + (historycount - 1));
 		for (int futureindex = 0; futureindex < futurecount; futureindex++) {
 			Double newValue = values.get(startindex + historycount + futureindex);
 			if (newValue - lastvalue > minPlus) {
 
-				// System.out.println(new Date(timestamps.get(startindex + (historycount - 1))) + " " + lastvalue);
-				// System.out.println(new Date(timestamps.get(startindex + historycount + futureindex)) + " " + newValue);
+				// System.out.println(new Date(timestamps.get(startindex +
+				// (historycount - 1))) + " " + lastvalue);
+				// System.out.println(new Date(timestamps.get(startindex +
+				// historycount + futureindex)) + " " + newValue);
 
 				labels.putScalar(new int[] { sampleindex, 0 }, 1);
 				break;
