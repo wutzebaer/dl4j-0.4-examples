@@ -31,15 +31,15 @@ public class BitcoinFeedForward {
 	static final double factor = 800;
 	static final Random r = new Random(7894);
 	static final int historycount = 1440 / 30 * 7;
-	static final int futurecount = 1440 / 30 * 1;
+	static final int futurecount = 1440 / 30 * 2;
 	static final double minPlus = 3 / factor;
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 	static final LinkedBlockingQueue<DataSet> asyncInserts = new LinkedBlockingQueue<>(2);
-	static final int hiddenLayerCount = 100;
-	static final int hiddenLayerWidth = historycount;
+	static final int hiddenLayerCount = 4;
+	static final int hiddenLayerWidth = historycount / 2;
 
-	static final int samplesPerDataSet = 1000;
+	static final int samplesPerDataSet = 1;
 
 	public static void main(String[] args) throws IOException, Exception {
 		// load values
@@ -53,25 +53,27 @@ public class BitcoinFeedForward {
 		is.close();
 		System.out.println(values.size());
 
+		System.out.println("Layer width: " + hiddenLayerWidth);
+		
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
 		builder.iterations(1);
-		builder.learningRate(1e-3);
+		builder.learningRate(1e-5);
 		builder.seed(123);
 
 		builder.regularization(true);
-		builder.useDropConnect(true);
-		builder.l1(2e-1);
-		builder.l2(2e-4);
-		builder.momentum(0.9);
+		//builder.useDropConnect(true);
+		builder.l1(2e-2);
+		builder.l2(2e-6);
+		//builder.momentum(0.9);
 
 
-		builder.updater(Updater.SGD);
+		builder.updater(Updater.ADADELTA);
 
-		builder.optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT);
-		builder.biasInit(1);
+		builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
+		builder.biasInit(0);
 		builder.miniBatch(true);
 		builder.weightInit(WeightInit.XAVIER);
-		builder.activation("identity");
+		builder.activation("relu");
 		// builder.gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue);
 
 		ListBuilder listBuilder = builder.list();
@@ -82,10 +84,10 @@ public class BitcoinFeedForward {
 			listBuilder.layer(i, hiddenLayerBuilder.build());
 		}
 
-		Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.MSE);
+		Builder outputLayerBuilder = new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_LOSS);
 		outputLayerBuilder.nIn(hiddenLayerWidth);
 		outputLayerBuilder.nOut(1);
-		outputLayerBuilder.activation("identity");
+		outputLayerBuilder.activation("sigmoid");
 		listBuilder.layer(hiddenLayerCount, outputLayerBuilder.build());
 
 		listBuilder.pretrain(false);
@@ -100,13 +102,13 @@ public class BitcoinFeedForward {
 		spawnSampleThread();
 		spawnSampleThread();
 
-		for (int epoch = 0; epoch < 100; epoch++) {
+		for (int epoch = 0; epoch < 10000; epoch++) {
 			DataSet ds = asyncInserts.take();
 			net.fit(ds);
 		}
 
 		TestStatistic testStatistic = new TestStatistic();
-		for (int t = 0; t < 10000; t++) {
+		for (int t = 0; t < 1000; t++) {
 			testRun(net, testStatistic);
 		}
 		System.out.println("Expected positives " + testStatistic.expectPositive);
