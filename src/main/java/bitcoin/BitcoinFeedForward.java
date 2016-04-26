@@ -15,6 +15,8 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration.ListBuilder;
+import org.deeplearning4j.nn.conf.distribution.Distribution;
+import org.deeplearning4j.nn.conf.distribution.GaussianDistribution;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer.Builder;
@@ -30,20 +32,19 @@ public class BitcoinFeedForward {
 
 	static final double factor = 800;
 	static final Random r = new Random(7894);
-	static final int historycount = 1440 / 30 * 7;
-	static final int futurecount = 1440 / 30 * 2;
-	static final double minPlus = 3 / factor;
+	static final int historycount = 1440 * 7;
+	static final int futurecount = 1440 * 2;
+	static final double minPlus = 4 / factor;
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 	static final LinkedBlockingQueue<DataSet> asyncInserts = new LinkedBlockingQueue<>(2);
-	static final int hiddenLayerCount = 4;
-	static final int hiddenLayerWidth = historycount / 2;
-
+	static final int hiddenLayerCount = 2;
+	static final int hiddenLayerWidth = 100;
 	static final int samplesPerDataSet = 1;
 
 	public static void main(String[] args) throws IOException, Exception {
 		// load values
-		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed_merged.log"));
+		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed.log"));
 		String line;
 		while ((line = is.readLine()) != null) {
 			String[] splits = line.split(",");
@@ -54,25 +55,25 @@ public class BitcoinFeedForward {
 		System.out.println(values.size());
 
 		System.out.println("Layer width: " + hiddenLayerWidth);
-		
+
 		NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
 		builder.iterations(1);
-		builder.learningRate(1e-5);
+		builder.learningRate(1e-6);
 		builder.seed(123);
 
-		builder.regularization(true);
-		//builder.useDropConnect(true);
-		builder.l1(2e-2);
-		builder.l2(2e-6);
-		//builder.momentum(0.9);
+		// builder.regularization(true);
+		// builder.useDropConnect(true);
+		// builder.l1(2e-5);
+		// builder.l2(2e-8);
+		// builder.momentum(10);
 
-
-		builder.updater(Updater.ADADELTA);
+		builder.updater(Updater.SGD);
 
 		builder.optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT);
 		builder.biasInit(0);
 		builder.miniBatch(true);
-		builder.weightInit(WeightInit.XAVIER);
+		builder.weightInit(WeightInit.DISTRIBUTION);
+		builder.dist(new GaussianDistribution(0, 0.32));
 		builder.activation("relu");
 		// builder.gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue);
 
@@ -102,19 +103,20 @@ public class BitcoinFeedForward {
 		spawnSampleThread();
 		spawnSampleThread();
 
-		for (int epoch = 0; epoch < 10000; epoch++) {
+		for (int epoch = 0; epoch < 2000; epoch++) {
 			DataSet ds = asyncInserts.take();
 			net.fit(ds);
 		}
 
 		TestStatistic testStatistic = new TestStatistic();
-		for (int t = 0; t < 1000; t++) {
+		for (int t = 0; t < 10000; t++) {
 			testRun(net, testStatistic);
 		}
 		System.out.println("Expected positives " + testStatistic.expectPositive);
 		System.out.println("Found    positives " + testStatistic.predictedPositive);
 		System.out.println("False    positives " + testStatistic.falsePositive);
-		
+		System.out.println("Ratio    positives " + ((double) testStatistic.predictedPositive / (testStatistic.predictedPositive + testStatistic.falsePositive)));
+
 	}
 
 	private static void spawnSampleThread() {
