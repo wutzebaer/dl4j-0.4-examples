@@ -97,7 +97,7 @@ public class BitcoinFeedForward {
 	}
 
 	private static void runRamdomHyperParameters() throws IOException {
-		int historycount = (int) (1440 * (r.nextDouble() * 14));
+		int historycount = (int) (1440 * (r.nextDouble() * 7));
 		int futurecount = (int) (1440 * (r.nextDouble() * 3));
 		double minPlus = 5 / factor;
 		int hiddenLayerCount = 1 + r.nextInt(6);
