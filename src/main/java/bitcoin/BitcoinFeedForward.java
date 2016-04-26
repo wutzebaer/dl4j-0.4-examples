@@ -111,7 +111,7 @@ public class BitcoinFeedForward {
 		TestStatistic result = testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightDist);
 		if (result.predictedPositive > 0 && result.predictedPositive < result.expectPositive) {
 			double success = (double) result.predictedPositive / (result.predictedPositive + result.falsePositive);
-			if (success > 0.5) {
+			if (success > 0.7) {
 				writeRecord(String.format("success:%f positivesExpected:%d foundPositived:%d falsePositives:%d historycount:%d futurecount:%d minPlus:%f hiddenLayerCount:%d hiddenLayerWidth:%d samplesPerDataSet:%d iterations:%d weightA:%f weightB:%f", success, result.expectPositive, result.predictedPositive, result.falsePositive, historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightA, weightB));
 			}
 		}
