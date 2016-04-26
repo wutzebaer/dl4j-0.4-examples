@@ -53,8 +53,11 @@ public class BitcoinFeedForward {
 		is.close();
 		System.out.println(values.size());
 
-		// testHyperParameters(8342, 2022, 0.006250, 3, 106, 1, 3, new GaussianDistribution(0, 0.174733));
-		// System.exit(0);
+		//testHyperParameters(8342, 2022, 0.006250, 3, 106, 1, 3, new GaussianDistribution(0, 0.174733));
+		//System.exit(0);
+
+		testConfigString("historycount:8784 futurecount:4176 minPlus:0,006250 hiddenLayerCount:2 hiddenLayerWidth:124 samplesPerDataSet:2 iterations:1 weightA:0,000000 weightB:0,567582");
+		System.exit(0);
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -79,6 +82,20 @@ public class BitcoinFeedForward {
 
 	}
 
+	private static void testConfigString(String config) {
+		String[] bits = config.split(" ");
+		int historycount = Integer.valueOf(bits[0].split(":")[1]);
+		int futurecount = Integer.valueOf(bits[1].split(":")[1]);
+		double minPlus = Double.valueOf(bits[2].split(":")[1].replace(",", "."));
+		int hiddenLayerCount = Integer.valueOf(bits[3].split(":")[1]);
+		int hiddenLayerWidth = Integer.valueOf(bits[4].split(":")[1]);
+		int samplesPerDataSet = Integer.valueOf(bits[5].split(":")[1]);
+		int iterations = Integer.valueOf(bits[6].split(":")[1]);
+		double weightA = Double.valueOf(bits[7].split(":")[1].replace(",", "."));
+		double weightB = Double.valueOf(bits[8].split(":")[1].replace(",", "."));
+		testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, new GaussianDistribution(weightA, weightB));
+	}
+
 	private static void runRamdomHyperParameters() throws IOException {
 		int historycount = (int) (1440 * (r.nextDouble() * 7));
 		int futurecount = (int) (1440 * (r.nextDouble() * 3));
@@ -94,8 +111,8 @@ public class BitcoinFeedForward {
 		TestStatistic result = testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightDist);
 		if (result.predictedPositive > 0 && result.predictedPositive < result.expectPositive) {
 			double success = (double) result.predictedPositive / (result.predictedPositive + result.falsePositive);
-			if (success > 0.7) {
-				writeRecord(String.format("success:%f positivesExpected:%d foundPositived:%d falsePositives:%d historycount:%d futurecount:%d minPlus:%f hiddenLayerCount:%d hiddenLayerWidth:%d samplesPerDataSet%d iterations:%d weightA:%f weightB:%f", success, result.expectPositive, result.predictedPositive, result.falsePositive, historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightA, weightB));
+			if (success > 0.5) {
+				writeRecord(String.format("success:%f positivesExpected:%d foundPositived:%d falsePositives:%d historycount:%d futurecount:%d minPlus:%f hiddenLayerCount:%d hiddenLayerWidth:%d samplesPerDataSet:%d iterations:%d weightA:%f weightB:%f", success, result.expectPositive, result.predictedPositive, result.falsePositive, historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightA, weightB));
 			}
 		}
 	}
