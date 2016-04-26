@@ -159,6 +159,8 @@ public class BitcoinChartLOader {
 		String[] providers = providerlist.split(",");
 
 		Long time = 1451606400000L; // ab 2016
+		time = 1420070400000L; // ab 2015
+		
 		// Long time = 1359261180000L; ab 16€
 		// Long time = 1279411200000L;
 		// Long time = 1459443420000L;

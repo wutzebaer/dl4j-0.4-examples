@@ -56,8 +56,8 @@ public class BitcoinFeedForward {
 		//testHyperParameters(8342, 2022, 0.006250, 3, 106, 1, 3, new GaussianDistribution(0, 0.174733));
 		//System.exit(0);
 
-		testConfigString("historycount:8784 futurecount:4176 minPlus:0,006250 hiddenLayerCount:2 hiddenLayerWidth:124 samplesPerDataSet:2 iterations:1 weightA:0,000000 weightB:0,567582");
-		System.exit(0);
+		//testConfigString("historycount:6148 futurecount:3951 minPlus:0,006250 hiddenLayerCount:1 hiddenLayerWidth:51 samplesPerDataSet:1 iterations:1 weightA:0,000000 weightB:0,759735");
+		//System.exit(0);
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -97,7 +97,7 @@ public class BitcoinFeedForward {
 	}
 
 	private static void runRamdomHyperParameters() throws IOException {
-		int historycount = (int) (1440 * (r.nextDouble() * 7));
+		int historycount = (int) (1440 * (r.nextDouble() * 14));
 		int futurecount = (int) (1440 * (r.nextDouble() * 3));
 		double minPlus = 5 / factor;
 		int hiddenLayerCount = 1 + r.nextInt(6);
