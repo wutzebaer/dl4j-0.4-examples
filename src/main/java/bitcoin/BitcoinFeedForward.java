@@ -118,7 +118,7 @@ public class BitcoinFeedForward {
 	}
 
 	private synchronized static void writeRecord(String s) throws IOException {
-		PrintWriter pw = new PrintWriter(new FileWriter("records.txt", true));
+		PrintWriter pw = new PrintWriter(new FileWriter(java.net.InetAddress.getLocalHost().getHostName() + "_records.txt", true));
 		pw.println(s);
 		pw.close();
 		System.out.println(s);
