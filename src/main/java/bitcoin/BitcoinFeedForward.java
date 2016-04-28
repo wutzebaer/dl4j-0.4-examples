@@ -82,7 +82,7 @@ public class BitcoinFeedForward {
 
 	}
 
-	private static void testConfigString(String config) {
+	public static TestStatistic testConfigString(String config) {
 		String[] bits = config.split(" ");
 		int historycount = Integer.valueOf(bits[0].split(":")[1]);
 		int futurecount = Integer.valueOf(bits[1].split(":")[1]);
@@ -93,7 +93,7 @@ public class BitcoinFeedForward {
 		int iterations = Integer.valueOf(bits[6].split(":")[1]);
 		double weightA = Double.valueOf(bits[7].split(":")[1].replace(",", "."));
 		double weightB = Double.valueOf(bits[8].split(":")[1].replace(",", "."));
-		testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, new GaussianDistribution(weightA, weightB));
+		return testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, new GaussianDistribution(weightA, weightB));
 	}
 
 	private static void runRamdomHyperParameters() throws IOException {
@@ -175,6 +175,7 @@ public class BitcoinFeedForward {
 		}
 
 		TestStatistic testStatistic = new TestStatistic();
+		testStatistic.network = net;
 		for (int t = 0; t < 10000; t++) {
 			testRun(net, testStatistic, historycount, futurecount, minPlus);
 		}
@@ -187,6 +188,7 @@ public class BitcoinFeedForward {
 	}
 
 	final static class TestStatistic {
+		MultiLayerNetwork network;
 		int expectPositive = 0;
 		int falsePositive = 0;
 		int predictedPositive = 0;
