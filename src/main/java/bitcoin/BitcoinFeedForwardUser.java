@@ -14,6 +14,7 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -41,16 +42,46 @@ public class BitcoinFeedForwardUser {
 
 		BitcoinFeedForward.initValues();
 
+		HashMap<String, MultiLayerNetwork> networks = new HashMap<>();
+
+		// train and save networks
 		for (String line : configLines) {
 			if (!new File("nets/" + DigestUtils.md5Hex(line) + "_coefficients.bin").isFile()) {
 				MultiLayerNetwork network = BitcoinFeedForward.testConfigString(line).network;
 				save(network, line);
 			} else {
-				System.out.println(line + "esists");
+				System.out.println("exists " + line);
 				// int count = ((FeedForwardLayer)load(line).getLayer(0).conf().getLayer()).getNIn();
 				// System.out.println(count);
 			}
+			networks.put(line, load(line));
 		}
+
+		// load newest charts
+		BitcoinChartLOader.main(args);
+		BitcoinFeedForward.initValues();
+
+		int yes = 0;
+		int no = 0;
+
+		// let every network vote
+		for (MultiLayerNetwork n : networks.values()) {
+			int historycount = ((FeedForwardLayer) n.getLayer(0).conf().getLayer()).getNIn();
+			INDArray input = Nd4j.zeros(1, historycount);
+			int startindex = BitcoinFeedForward.values.size() - historycount;
+			double firstvalue = BitcoinFeedForward.values.get(startindex);
+			for (int i = 0; i < historycount; i++) {
+				input.putScalar(new int[] { i }, BitcoinFeedForward.values.get(startindex + i) - firstvalue);
+			}
+			INDArray output = n.output(input);
+			if (output.getDouble(0) > 0.9) {
+				yes++;
+			} else {
+				no++;
+			}
+		}
+
+		System.out.println(String.format("Yes:%d no%d", yes, no));
 
 	}
 

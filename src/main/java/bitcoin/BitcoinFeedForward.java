@@ -79,6 +79,7 @@ public class BitcoinFeedForward {
 		// load values
 		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed.log"));
 		String line;
+		values.clear();
 		while ((line = is.readLine()) != null) {
 			String[] splits = line.split(",");
 			values.add(Double.valueOf(splits[1]) / factor);
