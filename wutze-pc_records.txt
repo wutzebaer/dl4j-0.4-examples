@@ -1,5 +1,3 @@
-success:0,700000 historycount:7283 futurecount:3597 minPlus:0,006250 hiddenLayerCount:1 hiddenLayerWidth:103 samplesPerDataSet2 iterations:3 weightA:0,000000 weightB:0,643855
-success:0,877551 historycount:8342 futurecount:2022 minPlus:0,006250 hiddenLayerCount:3 hiddenLayerWidth:106 samplesPerDataSet1 iterations:3 weightA:0,000000 weightB:0,174733
 success:1,000000 positivesExpected:3736 foundPositived:29 falsePositives:0 historycount:402 futurecount:1848 minPlus:0,006250 hiddenLayerCount:3 hiddenLayerWidth:54 samplesPerDataSet1 iterations:3 weightA:0,000000 weightB:0,432887
 success:1,000000 positivesExpected:3987 foundPositived:3 falsePositives:0 historycount:321 futurecount:2103 minPlus:0,006250 hiddenLayerCount:1 hiddenLayerWidth:94 samplesPerDataSet1 iterations:3 weightA:0,000000 weightB:0,944526
 success:1,000000 positivesExpected:5303 foundPositived:9 falsePositives:0 historycount:2819 futurecount:3358 minPlus:0,006250 hiddenLayerCount:3 hiddenLayerWidth:36 samplesPerDataSet3 iterations:1 weightA:0,000000 weightB:0,402493

@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.layers.FeedForwardLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -34,6 +35,10 @@ public class BitcoinFeedForwardUser {
 				BufferedReader bufferedReader = new BufferedReader(new FileReader(f));
 				String line;
 				while ((line = bufferedReader.readLine()) != null) {
+					// ignore empty lines
+					if (StringUtils.isBlank(line)) {
+						continue;
+					}
 					configLines.add(line);
 				}
 				bufferedReader.close();
@@ -49,7 +54,6 @@ public class BitcoinFeedForwardUser {
 			if (!new File("nets/" + DigestUtils.md5Hex(line) + "_coefficients.bin").isFile()) {
 				MultiLayerNetwork network = BitcoinFeedForward.testConfigString(line).network;
 				save(network, line);
-				continue;
 			} else {
 				System.out.println("exists " + line);
 			}
