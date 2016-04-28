@@ -1,6 +1,7 @@
 package bitcoin;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -41,17 +42,9 @@ public class BitcoinFeedForward {
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 
+	
 	public static void main(String[] args) throws IOException, Exception {
-		// load values
-		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed.log"));
-		String line;
-		while ((line = is.readLine()) != null) {
-			String[] splits = line.split(",");
-			values.add(Double.valueOf(splits[1]) / factor);
-			timestamps.add(Long.valueOf(splits[0]));
-		}
-		is.close();
-		System.out.println(values.size());
+		initValues();
 
 		//testHyperParameters(8342, 2022, 0.006250, 3, 106, 1, 3, new GaussianDistribution(0, 0.174733));
 		//System.exit(0);
@@ -82,17 +75,30 @@ public class BitcoinFeedForward {
 
 	}
 
+	public static void initValues() throws FileNotFoundException, IOException {
+		// load values
+		BufferedReader is = new BufferedReader(new FileReader("courses_bpi_fixed.log"));
+		String line;
+		while ((line = is.readLine()) != null) {
+			String[] splits = line.split(",");
+			values.add(Double.valueOf(splits[1]) / factor);
+			timestamps.add(Long.valueOf(splits[0]));
+		}
+		is.close();
+		System.out.println(values.size());
+	}
+
 	public static TestStatistic testConfigString(String config) {
 		String[] bits = config.split(" ");
-		int historycount = Integer.valueOf(bits[0].split(":")[1]);
-		int futurecount = Integer.valueOf(bits[1].split(":")[1]);
-		double minPlus = Double.valueOf(bits[2].split(":")[1].replace(",", "."));
-		int hiddenLayerCount = Integer.valueOf(bits[3].split(":")[1]);
-		int hiddenLayerWidth = Integer.valueOf(bits[4].split(":")[1]);
-		int samplesPerDataSet = Integer.valueOf(bits[5].split(":")[1]);
-		int iterations = Integer.valueOf(bits[6].split(":")[1]);
-		double weightA = Double.valueOf(bits[7].split(":")[1].replace(",", "."));
-		double weightB = Double.valueOf(bits[8].split(":")[1].replace(",", "."));
+		int historycount = Integer.valueOf(bits[4].split(":")[1]);
+		int futurecount = Integer.valueOf(bits[5].split(":")[1]);
+		double minPlus = Double.valueOf(bits[6].split(":")[1].replace(",", "."));
+		int hiddenLayerCount = Integer.valueOf(bits[7].split(":")[1]);
+		int hiddenLayerWidth = Integer.valueOf(bits[8].split(":")[1]);
+		int samplesPerDataSet = Integer.valueOf(bits[9].split(":")[1]);
+		int iterations = Integer.valueOf(bits[10].split(":")[1]);
+		double weightA = Double.valueOf(bits[11].split(":")[1].replace(",", "."));
+		double weightB = Double.valueOf(bits[12].split(":")[1].replace(",", "."));
 		return testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, new GaussianDistribution(weightA, weightB));
 	}
 
