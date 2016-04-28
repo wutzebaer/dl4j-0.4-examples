@@ -19,6 +19,7 @@ import java.util.List;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.layers.FeedForwardLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
@@ -46,6 +47,8 @@ public class BitcoinFeedForwardUser {
 				save(network, line);
 			} else {
 				System.out.println(line + "esists");
+				// int count = ((FeedForwardLayer)load(line).getLayer(0).conf().getLayer()).getNIn();
+				// System.out.println(count);
 			}
 		}
 
