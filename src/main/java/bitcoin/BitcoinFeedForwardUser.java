@@ -47,16 +47,15 @@ public class BitcoinFeedForwardUser {
 		// train and save networks
 		for (String line : configLines) {
 			if (!new File("nets/" + DigestUtils.md5Hex(line) + "_coefficients.bin").isFile()) {
-				//MultiLayerNetwork network = BitcoinFeedForward.testConfigString(line).network;
-				//save(network, line);
+				MultiLayerNetwork network = BitcoinFeedForward.testConfigString(line).network;
+				save(network, line);
 				continue;
 			} else {
 				System.out.println("exists " + line);
-				networks.put(line, load(line));
 			}
-			
+			networks.put(line, load(line));
 		}
-		
+
 		System.out.println("Loaded " + networks.size());
 
 		// load newest charts
@@ -69,14 +68,14 @@ public class BitcoinFeedForwardUser {
 		// let every network vote
 		for (MultiLayerNetwork n : networks.values()) {
 			int historycount = ((FeedForwardLayer) n.getLayer(0).conf().getLayer()).getNIn();
-			INDArray input = Nd4j.zeros(historycount);
+			INDArray input = Nd4j.zeros(1, historycount);
 			int startindex = BitcoinFeedForward.values.size() - historycount;
 			double firstvalue = BitcoinFeedForward.values.get(startindex);
 			for (int i = 0; i < historycount; i++) {
-				input.putScalar(new int[] { i }, BitcoinFeedForward.values.get(startindex + i) - firstvalue);
+				input.putScalar(new int[] { 0, i }, BitcoinFeedForward.values.get(startindex + i) - firstvalue);
 			}
 			INDArray output = n.output(input);
-			if (output.getDouble(0) > 0.9) {
+			if (output.getDouble(0, 0) > 0.9) {
 				yes++;
 			} else {
 				no++;
