@@ -38,7 +38,7 @@ public class BitcoinFeedForward {
 	private ExecutorService executor = Executors.newFixedThreadPool(3);
 
 	static final double factor = 800;
-	static final Random r = new Random(7894);
+	static final Random r = new Random(System.currentTimeMillis());
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 
