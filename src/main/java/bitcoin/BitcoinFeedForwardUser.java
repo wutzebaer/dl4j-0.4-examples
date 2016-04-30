@@ -51,8 +51,14 @@ public class BitcoinFeedForwardUser {
 
 		// train and save networks
 		for (String line : configLines) {
+			ConfigLine configLine = new ConfigLine(line);
+
+			if (configLine.foundPositived < 100) {
+				continue;
+			}
+
 			if (!new File("nets/" + DigestUtils.md5Hex(line) + "_coefficients.bin").isFile()) {
-				MultiLayerNetwork network = BitcoinFeedForward.testConfigString(line).network;
+				MultiLayerNetwork network = BitcoinFeedForward.testConfigString(configLine).network;
 				save(network, line);
 			} else {
 				System.out.println("exists " + line);

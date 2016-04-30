@@ -2,7 +2,6 @@ package bitcoin;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,9 +29,6 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
-import bitcoin.BitcoinFeedForward.TestStatistic;
-import ch.qos.logback.classic.pattern.FileOfCallerConverter;
-
 public class BitcoinFeedForward {
 
 	private ExecutorService executor = Executors.newFixedThreadPool(3);
@@ -42,15 +38,14 @@ public class BitcoinFeedForward {
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
 
-	
 	public static void main(String[] args) throws IOException, Exception {
 		initValues();
 
-		//testHyperParameters(8342, 2022, 0.006250, 3, 106, 1, 3, new GaussianDistribution(0, 0.174733));
-		//System.exit(0);
+		// testHyperParameters(8342, 2022, 0.006250, 3, 106, 1, 3, new GaussianDistribution(0, 0.174733));
+		// System.exit(0);
 
-		//testConfigString("historycount:6148 futurecount:3951 minPlus:0,006250 hiddenLayerCount:1 hiddenLayerWidth:51 samplesPerDataSet:1 iterations:1 weightA:0,000000 weightB:0,759735");
-		//System.exit(0);
+		// testConfigString("historycount:6148 futurecount:3951 minPlus:0,006250 hiddenLayerCount:1 hiddenLayerWidth:51 samplesPerDataSet:1 iterations:1 weightA:0,000000 weightB:0,759735");
+		// System.exit(0);
 
 		new Thread(new Runnable() {
 			public void run() {
@@ -89,18 +84,8 @@ public class BitcoinFeedForward {
 		System.out.println(values.size());
 	}
 
-	public static TestStatistic testConfigString(String config) {
-		String[] bits = config.split(" ");
-		int historycount = Integer.valueOf(bits[4].split(":")[1]);
-		int futurecount = Integer.valueOf(bits[5].split(":")[1]);
-		double minPlus = Double.valueOf(bits[6].split(":")[1].replace(",", "."));
-		int hiddenLayerCount = Integer.valueOf(bits[7].split(":")[1]);
-		int hiddenLayerWidth = Integer.valueOf(bits[8].split(":")[1]);
-		int samplesPerDataSet = Integer.valueOf(bits[9].split(":")[1]);
-		int iterations = Integer.valueOf(bits[10].split(":")[1]);
-		double weightA = Double.valueOf(bits[11].split(":")[1].replace(",", "."));
-		double weightB = Double.valueOf(bits[12].split(":")[1].replace(",", "."));
-		return testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, new GaussianDistribution(weightA, weightB));
+	public static TestStatistic testConfigString(ConfigLine configLine) {
+		return testHyperParameters(configLine.historycount, configLine.futurecount, configLine.minPlus, configLine.hiddenLayerCount, configLine.hiddenLayerWidth, configLine.samplesPerDataSet, configLine.iterations, new GaussianDistribution(configLine.weightA, configLine.weightB));
 	}
 
 	private static void runRamdomHyperParameters() throws IOException {
