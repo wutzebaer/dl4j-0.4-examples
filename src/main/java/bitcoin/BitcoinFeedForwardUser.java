@@ -24,6 +24,7 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.layers.FeedForwardLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 
 public class BitcoinFeedForwardUser {
@@ -53,17 +54,17 @@ public class BitcoinFeedForwardUser {
 		for (String line : configLines) {
 			ConfigLine configLine = new ConfigLine(line);
 
-			if (configLine.foundPositived < 100) {
+			if (configLine.foundPositived < 100 || configLine.success < 0.8) {
 				continue;
 			}
 
 			if (!new File("nets/" + DigestUtils.md5Hex(line) + "_coefficients.bin").isFile()) {
 				MultiLayerNetwork network = BitcoinFeedForward.testConfigString(configLine).network;
-				save(network, line);
+				SaveLoad.save(network, line);
 			} else {
 				System.out.println("exists " + line);
 			}
-			networks.put(line, load(line));
+			networks.put(line, SaveLoad.load(line));
 		}
 
 		System.out.println("Loaded " + networks.size());
@@ -74,7 +75,6 @@ public class BitcoinFeedForwardUser {
 
 		int yes = 0;
 		int no = 0;
-
 		// let every network vote
 		for (MultiLayerNetwork n : networks.values()) {
 			int historycount = ((FeedForwardLayer) n.getLayer(0).conf().getLayer()).getNIn();
@@ -91,57 +91,36 @@ public class BitcoinFeedForwardUser {
 				no++;
 			}
 		}
+		System.out.println(String.format("Yes:%d no:%d", yes, no));
 
-		System.out.println(String.format("Yes:%d no%d", yes, no));
+		for (int j = 0; j < 1000; j++) {
+			yes = 0;
+			no = 0;
+			int historycount = BitcoinFeedForward.maxRandomHistoryCount;
+			int futurecount = BitcoinFeedForward.maxRandomFutureCount;
+			DataSet ds = BitcoinFeedForward.createDataset(1, historycount, futurecount, BitcoinFeedForward.minPlus);
+			INDArray inputRow = ds.getFeatureMatrix().getRow(0);
+
+			// let every network vote
+			for (MultiLayerNetwork n : networks.values()) {
+				int networkHistoryCount = ((FeedForwardLayer) n.getLayer(0).conf().getLayer()).getNIn();
+
+				INDArray input = Nd4j.zeros(1, networkHistoryCount);
+				for (int s = 0; s < networkHistoryCount; s++) {
+					input.putScalar(s, inputRow.getDouble(inputRow.length() - networkHistoryCount + s));
+				}
+
+				INDArray output = n.output(input);
+				if (output.getDouble(0, 0) > 0.9) {
+					yes++;
+				} else {
+					no++;
+				}
+			}
+			if (yes > networks.size() / 2)
+				System.out.println(String.format("Yes:%d no:%d expect:%d", yes, no, ds.getLabels().getInt(0, 0)));
+		}
 
 	}
-
-	public static void save(MultiLayerNetwork net, String filename) throws IOException {
-		filename = DigestUtils.md5Hex(filename);
-
-		new File("nets").mkdirs();
-
-		// Write the network parameters:
-		try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(Paths.get("nets/" + filename + "_coefficients.bin")))) {
-			Nd4j.write(net.params(), dos);
-		}
-
-		// Write the network configuration:
-		FileUtils.write(new File("nets/" + filename + "_conf.json"), net.getLayerWiseConfigurations().toJson());
-
-		// Save the updater:
-		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("nets/" + filename + "_updater.bin"))) {
-			oos.writeObject(net.getUpdater());
-		}
-	}
-
-	public static MultiLayerNetwork load(String filename) throws FileNotFoundException, IOException, ClassNotFoundException {
-		filename = DigestUtils.md5Hex(filename);
-		// Load network configuration from disk:
-		MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("nets/" + filename + "_conf.json")));
-
-		// Load parameters from disk:
-		INDArray newParams;
-		try (DataInputStream dis = new DataInputStream(new FileInputStream("nets/" + filename + "_coefficients.bin"))) {
-			newParams = Nd4j.read(dis);
-		}
-
-		// Create a MultiLayerNetwork from the saved configuration and
-		// parameters
-		MultiLayerNetwork savedNetwork = new MultiLayerNetwork(confFromJson);
-		savedNetwork.init();
-		// must be set before setUpdater()
-		savedNetwork.setParameters(newParams);
-
-		// Load the updater:
-		org.deeplearning4j.nn.api.Updater updater;
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("nets/" + filename + "_updater.bin"))) {
-			updater = (org.deeplearning4j.nn.api.Updater) ois.readObject();
-		}
-
-		// Set the updater in the network
-		savedNetwork.setUpdater(updater);
-
-		return savedNetwork;
-	}
+	
 }

@@ -31,9 +31,14 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class BitcoinFeedForward {
 
+	static final double factor = 800;
+
+	public static final int maxRandomFutureCount = 1440 * 3;
+	public static final int maxRandomHistoryCount = 1440 * 7;
+	public static final double minPlus = 5 / factor;
+
 	private ExecutorService executor = Executors.newFixedThreadPool(3);
 
-	static final double factor = 800;
 	static final Random r = new Random(System.currentTimeMillis());
 	static final List<Double> values = new ArrayList<>();
 	static final List<Long> timestamps = new ArrayList<>();
@@ -89,9 +94,8 @@ public class BitcoinFeedForward {
 	}
 
 	private static void runRamdomHyperParameters() throws IOException {
-		int historycount = (int) (1440 * (r.nextDouble() * 7));
-		int futurecount = (int) (1440 * (r.nextDouble() * 3));
-		double minPlus = 5 / factor;
+		int historycount = (int) (maxRandomHistoryCount * 1);
+		int futurecount = (int) (maxRandomFutureCount * 1);
 		int hiddenLayerCount = 1 + r.nextInt(6);
 		int hiddenLayerWidth = 10 + r.nextInt(150);
 		int samplesPerDataSet = 1 + r.nextInt(3);
@@ -103,16 +107,17 @@ public class BitcoinFeedForward {
 		TestStatistic result = testHyperParameters(historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightDist);
 		if (result.predictedPositive > 0 && result.predictedPositive < result.expectPositive) {
 			double success = (double) result.predictedPositive / (result.predictedPositive + result.falsePositive);
-			if (success > 0.7) {
-				writeRecord(String.format("success:%f positivesExpected:%d foundPositived:%d falsePositives:%d historycount:%d futurecount:%d minPlus:%f hiddenLayerCount:%d hiddenLayerWidth:%d samplesPerDataSet:%d iterations:%d weightA:%f weightB:%f", success, result.expectPositive, result.predictedPositive, result.falsePositive, historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightA, weightB));
+			if (success > 0.7 && result.predictedPositive > 100) {
+				writeRecord(String.format("success:%f positivesExpected:%d foundPositived:%d falsePositives:%d historycount:%d futurecount:%d minPlus:%f hiddenLayerCount:%d hiddenLayerWidth:%d samplesPerDataSet:%d iterations:%d weightA:%f weightB:%f", success, result.expectPositive, result.predictedPositive, result.falsePositive, historycount, futurecount, minPlus, hiddenLayerCount, hiddenLayerWidth, samplesPerDataSet, iterations, weightA, weightB), result.network);
 			}
 		}
 	}
 
-	private synchronized static void writeRecord(String s) throws IOException {
+	private synchronized static void writeRecord(String s, MultiLayerNetwork net) throws IOException {
 		PrintWriter pw = new PrintWriter(new FileWriter(java.net.InetAddress.getLocalHost().getHostName() + "_records.txt", true));
 		pw.println(s);
 		pw.close();
+		SaveLoad.save(net, s);
 		System.out.println(s);
 	}
 
@@ -161,7 +166,7 @@ public class BitcoinFeedForward {
 		net.init();
 		net.setListeners(new ScoreIterationListener(1));
 
-		for (int epoch = 0; epoch < 2000; epoch++) {
+		for (int epoch = 0; epoch < 5000; epoch++) {
 			DataSet ds = createDataset(samplesPerDataSet, historycount, futurecount, minPlus);
 			net.fit(ds);
 		}
@@ -204,7 +209,7 @@ public class BitcoinFeedForward {
 
 	}
 
-	private static DataSet createDataset(int samplesPerDataset, int historycount, int futurecount, double minPlus) {
+	public static DataSet createDataset(int samplesPerDataset, int historycount, int futurecount, double minPlus) {
 		INDArray input = Nd4j.zeros(samplesPerDataset, historycount);
 		INDArray labels = Nd4j.zeros(samplesPerDataset, 1);
 		for (int sampleindex = 0; sampleindex < samplesPerDataset; sampleindex++) {

@@ -210,6 +210,7 @@ public class BitcoinChartLOader {
 					cal.add(Calendar.DATE, 1);
 					String dateStringTo = format.format(cal.getTime());
 					String url = "http://api.coindesk.com/charts/data?data=close&startdate=" + dateStringFrom + "&enddate=" + dateStringTo + "&exchanges=" + providerlist + "&dev=1&index=USD";
+					System.out.println("Downloading " + url);
 					// http://api.coindesk.com/charts/data?data=close&startdate=2016-03-30&enddate=2016-03-31&exchanges=bpi,okcoin&dev=1&index=USD
 					CloseableHttpResponse response = client.execute(new HttpGet(url));
 					InputStream is = response.getEntity().getContent();
